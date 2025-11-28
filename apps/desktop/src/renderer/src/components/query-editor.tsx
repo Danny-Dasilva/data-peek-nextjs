@@ -1,6 +1,15 @@
 'use client'
 
-import { Play, Download, FileJson, FileSpreadsheet, Loader2, AlertCircle, Database } from 'lucide-react'
+import {
+  Play,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  Loader2,
+  AlertCircle,
+  Database,
+  Wand2
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,15 +19,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useQueryStore, useConnectionStore } from '@/stores'
 import { DataTable } from '@/components/data-table'
+import { SQLEditor } from '@/components/sql-editor'
+import { formatSQL } from '@/lib/sql-formatter'
 
 export function QueryEditor() {
   const activeConnection = useConnectionStore((s) => s.getActiveConnection())
   const { currentQuery, isExecuting, result, error } = useQueryStore()
+  const setCurrentQuery = useQueryStore((s) => s.setCurrentQuery)
   const setIsExecuting = useQueryStore((s) => s.setIsExecuting)
   const addToHistory = useQueryStore((s) => s.addToHistory)
 
   const handleRunQuery = () => {
-    if (!activeConnection || isExecuting) return
+    if (!activeConnection || isExecuting || !currentQuery.trim()) return
 
     setIsExecuting(true)
 
@@ -38,6 +50,12 @@ export function QueryEditor() {
 
       setIsExecuting(false)
     }, 300 + Math.random() * 200)
+  }
+
+  const handleFormatQuery = () => {
+    if (!currentQuery.trim()) return
+    const formatted = formatSQL(currentQuery)
+    setCurrentQuery(formatted)
   }
 
   if (!activeConnection) {
@@ -62,87 +80,27 @@ export function QueryEditor() {
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Query Editor Section */}
       <div className="flex flex-col border-b border-border/40 shrink-0">
-        {/* Editor Placeholder - Will be Monaco */}
-        <div className="h-40 bg-muted/30 p-3">
-          <div className="h-full rounded-lg border border-border/50 bg-background/50 p-3 font-mono text-sm overflow-auto">
-            {currentQuery.split('\n').map((line, i) => (
-              <div key={i} className="text-muted-foreground whitespace-pre leading-relaxed">
-                {line
-                  .split(
-                    /(\b(?:SELECT|FROM|WHERE|ORDER BY|LIMIT|INSERT|UPDATE|DELETE|SET|AND|OR|JOIN|LEFT|RIGHT|INNER|ON|GROUP BY|HAVING|AS|INTO|VALUES|CREATE|ALTER|DROP|DESC|ASC|NULL|NOT|IN|LIKE|BETWEEN)\b)/gi
-                  )
-                  .map((part, j) => {
-                    const upperPart = part.toUpperCase()
-                    if (
-                      [
-                        'SELECT',
-                        'FROM',
-                        'WHERE',
-                        'ORDER BY',
-                        'LIMIT',
-                        'INSERT',
-                        'UPDATE',
-                        'DELETE',
-                        'SET',
-                        'AND',
-                        'OR',
-                        'JOIN',
-                        'LEFT',
-                        'RIGHT',
-                        'INNER',
-                        'ON',
-                        'GROUP BY',
-                        'HAVING',
-                        'AS',
-                        'INTO',
-                        'VALUES',
-                        'CREATE',
-                        'ALTER',
-                        'DROP',
-                        'NOT',
-                        'IN',
-                        'LIKE',
-                        'BETWEEN'
-                      ].includes(upperPart)
-                    ) {
-                      return (
-                        <span key={j} className="text-blue-400">
-                          {part}
-                        </span>
-                      )
-                    }
-                    if (['DESC', 'ASC', 'NULL'].includes(upperPart)) {
-                      return (
-                        <span key={j} className="text-purple-400">
-                          {part}
-                        </span>
-                      )
-                    }
-                    if (part.match(/^'[^']*'$/)) {
-                      return (
-                        <span key={j} className="text-green-400">
-                          {part}
-                        </span>
-                      )
-                    }
-                    if (part.match(/^\d+$/)) {
-                      return (
-                        <span key={j} className="text-orange-400">
-                          {part}
-                        </span>
-                      )
-                    }
-                    return part
-                  })}
-              </div>
-            ))}
-          </div>
+        {/* Monaco SQL Editor */}
+        <div className="p-3 pb-0">
+          <SQLEditor
+            value={currentQuery}
+            onChange={setCurrentQuery}
+            onRun={handleRunQuery}
+            onFormat={handleFormatQuery}
+            height={160}
+            placeholder="SELECT * FROM your_table LIMIT 100;"
+          />
         </div>
 
         {/* Editor Toolbar */}
-        <div className="flex items-center justify-between border-t border-border/40 bg-muted/20 px-3 py-1.5">
+        <div className="flex items-center justify-between bg-muted/20 px-3 py-2">
           <div className="flex items-center gap-2">
-            <Button size="sm" className="gap-1.5 h-7" disabled={isExecuting} onClick={handleRunQuery}>
+            <Button
+              size="sm"
+              className="gap-1.5 h-7"
+              disabled={isExecuting || !currentQuery.trim()}
+              onClick={handleRunQuery}
+            >
               {isExecuting ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
@@ -150,6 +108,17 @@ export function QueryEditor() {
               )}
               Run
               <kbd className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">⌘↵</kbd>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 h-7"
+              disabled={!currentQuery.trim()}
+              onClick={handleFormatQuery}
+            >
+              <Wand2 className="size-3.5" />
+              Format
+              <kbd className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">⌘⇧F</kbd>
             </Button>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">

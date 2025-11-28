@@ -1,28 +1,26 @@
-import * as React from "react"
-import {
-  ArrowDown,
-  ArrowUp,
-  Bell,
-  Copy,
-  CornerUpLeft,
-  CornerUpRight,
-  FileText,
-  GalleryVerticalEnd,
-  LineChart,
-  Link,
-  MoreHorizontal,
-  Settings2,
-  Star,
-  Trash,
-  Trash2,
-} from "lucide-react"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import * as React from 'react'
+import {
+  Play,
+  Wand2,
+  Copy,
+  Trash2,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  MoreHorizontal,
+  Loader2,
+  BookmarkPlus,
+  Sparkles
+} from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+  PopoverTrigger
+} from '@/components/ui/popover'
 import {
   Sidebar,
   SidebarContent,
@@ -30,87 +28,154 @@ import {
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
-
-const data = [
-  [
-    {
-      label: "Customize Page",
-      icon: Settings2,
-    },
-    {
-      label: "Turn into wiki",
-      icon: FileText,
-    },
-  ],
-  [
-    {
-      label: "Copy Link",
-      icon: Link,
-    },
-    {
-      label: "Duplicate",
-      icon: Copy,
-    },
-    {
-      label: "Move to",
-      icon: CornerUpRight,
-    },
-    {
-      label: "Move to Trash",
-      icon: Trash2,
-    },
-  ],
-  [
-    {
-      label: "Undo",
-      icon: CornerUpLeft,
-    },
-    {
-      label: "View analytics",
-      icon: LineChart,
-    },
-    {
-      label: "Version History",
-      icon: GalleryVerticalEnd,
-    },
-    {
-      label: "Show delete pages",
-      icon: Trash,
-    },
-    {
-      label: "Notifications",
-      icon: Bell,
-    },
-  ],
-  [
-    {
-      label: "Import",
-      icon: ArrowUp,
-    },
-    {
-      label: "Export",
-      icon: ArrowDown,
-    },
-  ],
-]
+  SidebarMenuItem
+} from '@/components/ui/sidebar'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '@/components/ui/tooltip'
+import { useQueryStore, useConnectionStore } from '@/stores'
+import { formatSQL } from '@/lib/sql-formatter'
 
 export function NavActions() {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [copied, setCopied] = React.useState(false)
 
-  React.useEffect(() => {
-    setIsOpen(true)
-  }, [])
+  const activeConnection = useConnectionStore((s) => s.getActiveConnection())
+  const { currentQuery, isExecuting, result } = useQueryStore()
+  const setCurrentQuery = useQueryStore((s) => s.setCurrentQuery)
+  const setIsExecuting = useQueryStore((s) => s.setIsExecuting)
+  const addToHistory = useQueryStore((s) => s.addToHistory)
+
+  const handleRunQuery = () => {
+    if (!activeConnection || isExecuting || !currentQuery.trim()) return
+
+    setIsExecuting(true)
+    const startTime = Date.now()
+
+    setTimeout(() => {
+      const durationMs = Date.now() - startTime + Math.random() * 50
+      addToHistory({
+        query: currentQuery,
+        durationMs: Math.round(durationMs),
+        rowCount: result?.rowCount ?? 0,
+        status: 'success',
+        connectionId: activeConnection.id
+      })
+      setIsExecuting(false)
+    }, 300 + Math.random() * 200)
+  }
+
+  const handleFormatQuery = () => {
+    if (!currentQuery.trim()) return
+    const formatted = formatSQL(currentQuery)
+    setCurrentQuery(formatted)
+    setIsOpen(false)
+  }
+
+  const handleCopyQuery = async () => {
+    if (!currentQuery.trim()) return
+    await navigator.clipboard.writeText(currentQuery)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    setIsOpen(false)
+  }
+
+  const handleClearEditor = () => {
+    setCurrentQuery('')
+    setIsOpen(false)
+  }
+
+  const handleExportCSV = () => {
+    if (!result) return
+    // Generate CSV
+    const headers = result.columns.map((c) => c.name).join(',')
+    const rows = result.rows.map((row) =>
+      result.columns
+        .map((c) => {
+          const val = row[c.name]
+          if (val === null || val === undefined) return ''
+          const str = String(val)
+          return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str
+        })
+        .join(',')
+    )
+    const csv = [headers, ...rows].join('\n')
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `query-results-${Date.now()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    setIsOpen(false)
+  }
+
+  const handleExportJSON = () => {
+    if (!result) return
+    const json = JSON.stringify(result.rows, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `query-results-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setIsOpen(false)
+  }
+
+  const canRun = activeConnection && currentQuery.trim() && !isExecuting
+  const hasResults = !!result
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <div className="text-muted-foreground hidden font-medium md:inline-block">
-        Edit Oct 08
-      </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7">
-        <Star />
-      </Button>
+    <div className="flex items-center gap-1.5">
+      {/* Run Query Button */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="sm"
+            className="gap-1.5 h-7 px-2.5"
+            disabled={!canRun}
+            onClick={handleRunQuery}
+          >
+            {isExecuting ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Play className="size-3.5" />
+            )}
+            <span className="hidden sm:inline">Run</span>
+            <kbd className="ml-0.5 hidden rounded bg-primary-foreground/20 px-1 py-0.5 text-[9px] font-medium sm:inline">
+              ⌘↵
+            </kbd>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>Execute query (⌘+Enter)</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Format Button */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            disabled={!currentQuery.trim()}
+            onClick={handleFormatQuery}
+          >
+            <Wand2 className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>Format SQL (⌘+Shift+F)</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {/* More Actions Popover */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -118,30 +183,90 @@ export function NavActions() {
             size="icon"
             className="data-[state=open]:bg-accent h-7 w-7"
           >
-            <MoreHorizontal />
+            <MoreHorizontal className="size-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-56 overflow-hidden rounded-lg p-0"
+          className="w-52 overflow-hidden rounded-lg p-0"
           align="end"
         >
           <Sidebar collapsible="none" className="bg-transparent">
             <SidebarContent>
-              {data.map((group, index) => (
-                <SidebarGroup key={index} className="border-b last:border-none">
-                  <SidebarGroupContent className="gap-0">
-                    <SidebarMenu>
-                      {group.map((item, index) => (
-                        <SidebarMenuItem key={index}>
-                          <SidebarMenuButton>
-                            <item.icon /> <span>{item.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              ))}
+              {/* Query Actions */}
+              <SidebarGroup className="border-b py-1.5">
+                <SidebarGroupContent className="gap-0">
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        onClick={handleCopyQuery}
+                        disabled={!currentQuery.trim()}
+                        className="gap-2.5"
+                      >
+                        <Copy className="size-4" />
+                        <span>{copied ? 'Copied!' : 'Copy Query'}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        onClick={handleClearEditor}
+                        disabled={!currentQuery.trim()}
+                        className="gap-2.5"
+                      >
+                        <Trash2 className="size-4" />
+                        <span>Clear Editor</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled className="gap-2.5">
+                        <BookmarkPlus className="size-4" />
+                        <span>Save to Snippets</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+
+              {/* AI Actions */}
+              <SidebarGroup className="border-b py-1.5">
+                <SidebarGroupContent className="gap-0">
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled className="gap-2.5">
+                        <Sparkles className="size-4" />
+                        <span>Explain Query</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+
+              {/* Export Actions */}
+              <SidebarGroup className="py-1.5">
+                <SidebarGroupContent className="gap-0">
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        onClick={handleExportCSV}
+                        disabled={!hasResults}
+                        className="gap-2.5"
+                      >
+                        <FileSpreadsheet className="size-4" />
+                        <span>Export as CSV</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        onClick={handleExportJSON}
+                        disabled={!hasResults}
+                        className="gap-2.5"
+                      >
+                        <FileJson className="size-4" />
+                        <span>Export as JSON</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
             </SidebarContent>
           </Sidebar>
         </PopoverContent>

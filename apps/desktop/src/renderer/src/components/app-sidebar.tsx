@@ -7,6 +7,7 @@ import { ConnectionSwitcher } from '@/components/connection-switcher'
 import { ModeToggle } from '@/components/mode-toggle'
 import { QueryHistory } from '@/components/query-history'
 import { SchemaExplorer } from '@/components/schema-explorer'
+import { SidebarQuickQuery } from '@/components/sidebar-quick-query'
 import {
   Sidebar,
   SidebarContent,
@@ -17,20 +18,33 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  SidebarSeparator
 } from '@/components/ui/sidebar'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar className="border-r-0 bg-sidebar/80 backdrop-blur-xl" {...props}>
+      {/* Header - Connection Switcher */}
       <SidebarHeader className="pt-10">
         <ConnectionSwitcher />
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent className="gap-0">
+        {/* Quick Query Panel */}
+        <SidebarQuickQuery />
+
+        <SidebarSeparator className="mx-3" />
+
+        {/* Schema Explorer */}
         <SchemaExplorer />
+
+        <SidebarSeparator className="mx-3" />
+
+        {/* Query History */}
         <QueryHistory />
 
-        {/* Secondary Navigation */}
+        {/* Secondary Navigation - Settings & Help */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
@@ -44,7 +58,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="https://github.com/your-repo/data-peek" target="_blank" rel="noreferrer">
+                  <a
+                    href="https://github.com/Rohithgilla12/data-peek"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <MessageCircleQuestion className="size-4" />
                     <span>Help</span>
                   </a>
@@ -54,9 +72,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {/* Footer - Theme Toggle */}
       <SidebarFooter>
         <ModeToggle />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   )

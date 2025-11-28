@@ -1,0 +1,172 @@
+'use client'
+
+import * as React from 'react'
+import { Play, Send, ChevronDown, Loader2, Clock } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible'
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem
+} from '@/components/ui/sidebar'
+import { SQLEditor } from '@/components/sql-editor'
+import { useQueryStore, useConnectionStore } from '@/stores'
+import { cn } from '@/lib/utils'
+
+export function SidebarQuickQuery() {
+  const [isOpen, setIsOpen] = React.useState(true)
+  const [quickQuery, setQuickQuery] = React.useState('')
+  const [isRunning, setIsRunning] = React.useState(false)
+
+  const activeConnection = useConnectionStore((s) => s.getActiveConnection())
+  const { history } = useQueryStore()
+  const setCurrentQuery = useQueryStore((s) => s.setCurrentQuery)
+  const addToHistory = useQueryStore((s) => s.addToHistory)
+
+  // Get recent 3 queries for quick access
+  const recentQueries = React.useMemo(() => {
+    return history
+      .filter((h) => h.status === 'success')
+      .slice(0, 3)
+      .map((h) => ({
+        id: h.id,
+        query: h.query,
+        preview: h.query.replace(/\s+/g, ' ').slice(0, 40) + (h.query.length > 40 ? '...' : '')
+      }))
+  }, [history])
+
+  const handleRunQuickQuery = () => {
+    if (!activeConnection || !quickQuery.trim() || isRunning) return
+
+    setIsRunning(true)
+    const startTime = Date.now()
+
+    setTimeout(() => {
+      const durationMs = Date.now() - startTime + Math.random() * 50
+      addToHistory({
+        query: quickQuery,
+        durationMs: Math.round(durationMs),
+        rowCount: Math.floor(Math.random() * 100),
+        status: 'success',
+        connectionId: activeConnection.id
+      })
+      setIsRunning(false)
+      setQuickQuery('')
+    }, 300 + Math.random() * 200)
+  }
+
+  const handleSendToMainEditor = () => {
+    if (!quickQuery.trim()) return
+    setCurrentQuery(quickQuery)
+    setQuickQuery('')
+  }
+
+  const handleUseRecentQuery = (query: string) => {
+    setCurrentQuery(query)
+  }
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group/collapsible">
+      <SidebarGroup className="p-0">
+        <CollapsibleTrigger asChild>
+          <SidebarGroupLabel className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-sidebar-accent/50">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Quick Query
+            </span>
+            <ChevronDown
+              className={cn(
+                'size-4 text-muted-foreground transition-transform duration-200',
+                isOpen && 'rotate-180'
+              )}
+            />
+          </SidebarGroupLabel>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarGroupContent className="px-3 pb-3">
+            {/* Compact SQL Editor */}
+            <div className="space-y-2">
+              <SQLEditor
+                value={quickQuery}
+                onChange={setQuickQuery}
+                onRun={handleRunQuickQuery}
+                height={80}
+                compact
+                placeholder="Quick SQL..."
+                readOnly={!activeConnection}
+              />
+
+              {/* Action Buttons */}
+              <div className="flex gap-1.5">
+                <Button
+                  size="sm"
+                  className="flex-1 h-7 gap-1.5 text-xs"
+                  disabled={!activeConnection || !quickQuery.trim() || isRunning}
+                  onClick={handleRunQuickQuery}
+                >
+                  {isRunning ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <Play className="size-3" />
+                  )}
+                  Run
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-7 gap-1.5 text-xs"
+                  disabled={!quickQuery.trim()}
+                  onClick={handleSendToMainEditor}
+                >
+                  <Send className="size-3" />
+                  Send to Editor
+                </Button>
+              </div>
+            </div>
+
+            {/* Recent Queries */}
+            {recentQueries.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border/40">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Clock className="size-3 text-muted-foreground" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Recent
+                  </span>
+                </div>
+                <SidebarMenu>
+                  {recentQueries.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => handleUseRecentQuery(item.query)}
+                        className="h-auto py-1.5 px-2"
+                      >
+                        <code className="text-[10px] font-mono text-muted-foreground truncate">
+                          {item.preview}
+                        </code>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </div>
+            )}
+
+            {/* No Connection State */}
+            {!activeConnection && (
+              <div className="mt-2 text-center">
+                <p className="text-[10px] text-muted-foreground">
+                  Select a connection to run queries
+                </p>
+              </div>
+            )}
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
+  )
+}

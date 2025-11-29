@@ -87,12 +87,45 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
     durationMs: number
   } | null>(null)
   const [isExplaining, setIsExplaining] = useState(false)
+  const [executionPlanWidth, setExecutionPlanWidth] = useState(() => {
+    // Load from localStorage or default to 500
+    const saved = localStorage.getItem('execution-plan-width')
+    return saved ? parseInt(saved, 10) : 500
+  })
+  const isResizing = useRef(false)
 
   // Save query dialog state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
 
   // Get the createForeignKeyTab action
   const createForeignKeyTab = useTabStore((s) => s.createForeignKeyTab)
+
+  // Handle execution plan panel resize
+  const handleExecutionPlanResize = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing.current) return
+      const newWidth = Math.max(300, Math.min(800, window.innerWidth - e.clientX))
+      setExecutionPlanWidth(newWidth)
+    },
+    []
+  )
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    // Save to localStorage
+    localStorage.setItem('execution-plan-width', String(executionPlanWidth))
+  }, [executionPlanWidth])
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleExecutionPlanResize)
+    document.addEventListener('mouseup', stopResizing)
+    return () => {
+      document.removeEventListener('mousemove', handleExecutionPlanResize)
+      document.removeEventListener('mouseup', stopResizing)
+    }
+  }, [handleExecutionPlanResize, stopResizing])
 
   const handleRunQuery = useCallback(async () => {
     if (!tab || tab.type === 'erd' || tab.type === 'table-designer' || !tabConnection || tab.isExecuting || !tab.query.trim()) {
@@ -777,7 +810,20 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
 
       {/* Execution Plan Panel */}
       {executionPlan && (
-        <div className="fixed inset-y-0 right-0 w-[500px] z-50 shadow-xl">
+        <div
+          className="fixed inset-y-0 right-0 z-50 shadow-xl"
+          style={{ width: executionPlanWidth }}
+        >
+          {/* Resize handle */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary/50 transition-colors z-10"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              isResizing.current = true
+              document.body.style.cursor = 'ew-resize'
+              document.body.style.userSelect = 'none'
+            }}
+          />
           <ExecutionPlanViewer
             plan={executionPlan.plan as Parameters<typeof ExecutionPlanViewer>[0]['plan']}
             durationMs={executionPlan.durationMs}

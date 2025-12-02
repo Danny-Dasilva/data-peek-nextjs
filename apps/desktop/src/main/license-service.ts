@@ -44,14 +44,6 @@ function getDeviceName(): string {
 }
 
 /**
- * Get encryption key derived from device ID
- */
-function getEncryptionKey(): string {
-  const deviceId = getDeviceId()
-  return crypto.createHash('sha256').update(deviceId).digest('hex').slice(0, 32)
-}
-
-/**
  * Calculate days between two dates
  */
 function daysBetween(date1: Date, date2: Date): number {
@@ -85,7 +77,6 @@ export async function initLicenseStore(): Promise<void> {
 
   store = await DpSecureStorage.create<{ license?: LicenseData }>({
     name: 'data-peek-license',
-    encryptionKey: getEncryptionKey(),
     defaults: {
       license: undefined
     }

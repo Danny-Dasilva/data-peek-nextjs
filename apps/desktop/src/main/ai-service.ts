@@ -5,7 +5,6 @@
  * Uses AI SDK's generateObject for typed JSON output.
  */
 
-import { safeStorage } from 'electron'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -30,18 +29,6 @@ export type {
   AIStructuredResponse,
   StoredChatMessage,
   ChatSession
-}
-
-/**
- * Generate a machine-specific encryption key using Electron's safeStorage.
- * Falls back to a static key if safeStorage is not available.
- */
-function getEncryptionKey(): string {
-  const baseKey = 'data-peek-ai-v1'
-  if (safeStorage.isEncryptionAvailable()) {
-    return safeStorage.encryptString(baseKey).toString('base64')
-  }
-  return baseKey
 }
 
 // Zod schema for structured output
@@ -91,12 +78,10 @@ let chatStore: DpStorage<{ chatHistory: ChatHistoryStore }> | null = null
 
 /**
  * Initialize the AI config and chat stores
- * Handles migration from old encryption key to new safeStorage-based key
  */
 export async function initAIStore(): Promise<void> {
   aiStore = await DpSecureStorage.create<{ aiConfig: AIConfig | null }>({
     name: 'data-peek-ai-config',
-    encryptionKey: getEncryptionKey(),
     defaults: {
       aiConfig: null
     }

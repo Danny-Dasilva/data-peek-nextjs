@@ -7,6 +7,9 @@ import {
   activateLicenseOffline,
   getCustomerPortalUrl
 } from '../license-service'
+import { createLogger } from '../lib/logger'
+
+const log = createLogger('license-handlers')
 
 /**
  * Register license management handlers
@@ -18,7 +21,7 @@ export function registerLicenseHandlers(): void {
       const status = await checkLicense()
       return { success: true, data: status }
     } catch (error: unknown) {
-      console.error('[license-handlers] Check error:', error)
+      log.error('Check error:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       return { success: false, error: errorMessage }
     }
@@ -26,7 +29,7 @@ export function registerLicenseHandlers(): void {
 
   // Activate a license
   ipcMain.handle('license:activate', async (_, request: LicenseActivationRequest) => {
-    console.log('[license-handlers] Activating license for:', request.email)
+    log.info('Activating license')
     try {
       const result = await activateLicense(request.key, request.email)
       if (result.success) {
@@ -35,7 +38,7 @@ export function registerLicenseHandlers(): void {
       }
       return { success: false, error: result.error }
     } catch (error: unknown) {
-      console.error('[license-handlers] Activation error:', error)
+      log.error('Activation error:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       return { success: false, error: errorMessage }
     }
@@ -43,12 +46,12 @@ export function registerLicenseHandlers(): void {
 
   // Deactivate the current license
   ipcMain.handle('license:deactivate', async () => {
-    console.log('[license-handlers] Deactivating license')
+    log.info('Deactivating license')
     try {
       const result = await deactivateLicense()
       return { success: result.success, error: result.error }
     } catch (error: unknown) {
-      console.error('[license-handlers] Deactivation error:', error)
+      log.error('Deactivation error:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       return { success: false, error: errorMessage }
     }
@@ -66,13 +69,13 @@ export function registerLicenseHandlers(): void {
         daysValid
       }: { key: string; email: string; type?: 'individual' | 'team'; daysValid?: number }
     ) => {
-      console.log('[license-handlers] Offline activation for:', email)
+      log.info('Offline activation')
       try {
         activateLicenseOffline(key, email, type, daysValid)
         const status = await checkLicense()
         return { success: true, data: status }
       } catch (error: unknown) {
-        console.error('[license-handlers] Offline activation error:', error)
+        log.error('Offline activation error:', error)
         const errorMessage = error instanceof Error ? error.message : String(error)
         return { success: false, error: errorMessage }
       }
@@ -81,7 +84,7 @@ export function registerLicenseHandlers(): void {
 
   // Get customer portal URL for managing subscription
   ipcMain.handle('license:customer-portal', async () => {
-    console.log('[license-handlers] Getting customer portal URL')
+    log.debug('Getting customer portal URL')
     try {
       const result = await getCustomerPortalUrl()
       if (result.success && result.url) {
@@ -91,7 +94,7 @@ export function registerLicenseHandlers(): void {
       }
       return { success: false, error: result.error }
     } catch (error: unknown) {
-      console.error('[license-handlers] Customer portal error:', error)
+      log.error('Customer portal error:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       return { success: false, error: errorMessage }
     }

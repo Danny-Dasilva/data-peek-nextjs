@@ -6,6 +6,9 @@ import { registerDDLHandlers } from './ddl-handlers'
 import { registerLicenseHandlers } from './license-handlers'
 import { registerSavedQueriesHandlers } from './saved-queries-handlers'
 import { registerAIHandlers } from './ai-handlers'
+import { createLogger } from '../lib/logger'
+
+const log = createLogger('ipc')
 
 export interface IpcStores {
   connections: DpStorage<{ connections: ConnectionConfig[] }>
@@ -37,7 +40,7 @@ export function registerAllHandlers(stores: IpcStores): void {
   // AI features
   registerAIHandlers()
 
-  console.log('[ipc] All handlers registered')
+  log.debug('All handlers registered')
 }
 
 // Re-export handler registration functions for testing or selective registration

@@ -10,6 +10,9 @@ import {
   invalidateSchemaCache,
   type CachedSchema
 } from '../schema-cache'
+import { createLogger } from '../lib/logger'
+
+const log = createLogger('query-handlers')
 
 /**
  * Register database query and schema handlers
@@ -38,21 +41,20 @@ export function registerQueryHandlers(): void {
         executionId
       }: { config: ConnectionConfig; query: string; executionId?: string }
     ) => {
-      console.log('[query-handlers] Received query request')
-      console.log('[query-handlers] Config:', { ...config, password: '***' })
-      console.log('[query-handlers] Query:', query)
-      console.log('[query-handlers] Execution ID:', executionId)
+      log.debug('Received query request', { ...config, password: '***' })
+      log.debug('Query:', query)
+      log.debug('Execution ID:', executionId)
 
       try {
         const adapter = getAdapter(config)
-        console.log('[query-handlers] Connecting...')
+        log.debug('Connecting...')
 
         // Use queryMultiple to support multiple statements
         // Pass executionId for cancellation support
         const multiResult = await adapter.queryMultiple(config, query, { executionId })
 
-        console.log('[query-handlers] Query completed in', multiResult.totalDurationMs, 'ms')
-        console.log('[query-handlers] Statement count:', multiResult.results.length)
+        log.debug('Query completed in', multiResult.totalDurationMs, 'ms')
+        log.debug('Statement count:', multiResult.results.length)
 
         return {
           success: true,
@@ -79,7 +81,7 @@ export function registerQueryHandlers(): void {
           }
         }
       } catch (error: unknown) {
-        console.error('[query-handlers] Error:', error)
+        log.error('Query error:', error)
         const errorMessage = error instanceof Error ? error.message : String(error)
         return { success: false, error: errorMessage }
       }
@@ -88,19 +90,19 @@ export function registerQueryHandlers(): void {
 
   // Cancel a running query by execution ID
   ipcMain.handle('db:cancel-query', async (_, executionId: string) => {
-    console.log('[query-handlers] Cancelling query:', executionId)
+    log.debug('Cancelling query:', executionId)
 
     try {
       const result = await cancelQuery(executionId)
       if (result.cancelled) {
-        console.log('[query-handlers] Query cancelled successfully')
+        log.debug('Query cancelled successfully')
         return { success: true, data: { cancelled: true } }
       } else {
-        console.log('[query-handlers] Query not found:', result.error)
+        log.debug('Query not found:', result.error)
         return { success: false, error: result.error }
       }
     } catch (error: unknown) {
-      console.error('[query-handlers] Error:', error)
+      log.error('Cancel query error:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       return { success: false, error: errorMessage }
     }
@@ -125,7 +127,7 @@ export function registerQueryHandlers(): void {
         if (!forceRefresh) {
           const cached = getCachedSchema(config)
           if (cached && isCacheValid(cached)) {
-            console.log(`[query-handlers] Cache hit`)
+            log.debug('Cache hit')
             return {
               success: true,
               data: {
@@ -140,9 +142,9 @@ export function registerQueryHandlers(): void {
 
         // Fetch fresh data
         if (forceRefresh) {
-          console.log(`[query-handlers] Force refresh, fetching from database...`)
+          log.debug('Force refresh, fetching from database...')
         } else {
-          console.log(`[query-handlers] Cache miss, fetching from database...`)
+          log.debug('Cache miss, fetching from database...')
         }
         const adapter = getAdapter(config)
         const schemas = await adapter.getSchemas(config)
@@ -176,7 +178,7 @@ export function registerQueryHandlers(): void {
         // On error, try to return stale cache if available
         const staleCache = getCachedSchema(config)
         if (staleCache) {
-          console.log(`[query-handlers] Returning stale cache due to error`)
+          log.warn('Returning stale cache due to error')
           return {
             success: true,
             data: {
@@ -199,9 +201,8 @@ export function registerQueryHandlers(): void {
   ipcMain.handle(
     'db:execute',
     async (_, { config, batch }: { config: ConnectionConfig; batch: EditBatch }) => {
-      console.log('[query-handlers] Received edit batch')
-      console.log('[query-handlers] Context:', batch.context)
-      console.log('[query-handlers] Operations count:', batch.operations.length)
+      log.debug('Received edit batch', batch.context)
+      log.debug('Operations count:', batch.operations.length)
 
       const adapter = getAdapter(config)
       const dbType = config.dbType || 'postgresql'
@@ -254,7 +255,7 @@ export function registerQueryHandlers(): void {
 
         return { success: true, data: result }
       } catch (error: unknown) {
-        console.error('[query-handlers] Error:', error)
+        log.error('Execute batch error:', error)
         const errorMessage = error instanceof Error ? error.message : String(error)
         // Mark all valid operations as failed
         for (const op of validOperations) {
@@ -294,9 +295,8 @@ export function registerQueryHandlers(): void {
       _,
       { config, query, analyze }: { config: ConnectionConfig; query: string; analyze: boolean }
     ) => {
-      console.log('[query-handlers] Received explain request')
-      console.log('[query-handlers] Query:', query)
-      console.log('[query-handlers] Analyze:', analyze)
+      log.debug('Received explain request, analyze:', analyze)
+      log.debug('Query:', query)
 
       try {
         const adapter = getAdapter(config)
@@ -307,7 +307,7 @@ export function registerQueryHandlers(): void {
           data: result
         }
       } catch (error: unknown) {
-        console.error('[query-handlers] Error:', error)
+        log.error('Explain error:', error)
         const errorMessage = error instanceof Error ? error.message : String(error)
         return { success: false, error: errorMessage }
       }

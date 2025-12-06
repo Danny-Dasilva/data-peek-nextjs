@@ -28,6 +28,9 @@ import {
   type AIMultiProviderConfig,
   type AIProviderConfig
 } from '../ai-service'
+import { createLogger } from '../lib/logger'
+
+const log = createLogger('ai-handlers')
 
 /**
  * Register AI-related handlers
@@ -179,8 +182,7 @@ export function registerAIHandlers(): void {
         dbType: string
       }
     ) => {
-      console.log('[ai-handlers] Received chat request')
-      console.log('[ai-handlers] Messages count:', messages.length)
+      log.debug('Received chat request, messages count:', messages.length)
 
       try {
         const config = getAIConfig()
@@ -199,7 +201,7 @@ export function registerAIHandlers(): void {
           return { success: false, error: result.error }
         }
       } catch (error: unknown) {
-        console.error('[ai-handlers] Error:', error)
+        log.error('Chat error:', error)
         const errorMessage = error instanceof Error ? error.message : String(error)
         return { success: false, error: errorMessage }
       }

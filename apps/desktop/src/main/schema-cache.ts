@@ -1,5 +1,8 @@
 import type { ConnectionConfig, SchemaInfo } from '@shared/index'
 import { DpStorage } from './storage'
+import { createLogger } from './lib/logger'
+
+const log = createLogger('schema-cache')
 
 // Schema cache types
 export interface CachedSchema {
@@ -36,7 +39,7 @@ export async function initSchemaCache(): Promise<void> {
   for (const [key, value] of Object.entries(diskCache)) {
     schemaMemoryCache.set(key, value)
   }
-  console.log(`[schema-cache] Loaded ${schemaMemoryCache.size} cached schemas from disk`)
+  log.debug(`Loaded ${schemaMemoryCache.size} cached schemas from disk`)
 }
 
 /**
@@ -66,7 +69,7 @@ export function isCacheValid(cached: CachedSchema): boolean {
  */
 export function setCachedSchema(config: ConnectionConfig, cacheEntry: CachedSchema): void {
   if (!schemaCacheStore) {
-    console.warn('[schema-cache] Cache store not initialized')
+    log.warn('Cache store not initialized')
     return
   }
 
@@ -80,7 +83,7 @@ export function setCachedSchema(config: ConnectionConfig, cacheEntry: CachedSche
   allCache[cacheKey] = cacheEntry
   schemaCacheStore.set('cache', allCache)
 
-  console.log(`[schema-cache] Cached schemas for ${cacheKey}`)
+  log.debug(`Cached schemas for ${cacheKey}`)
 }
 
 /**
@@ -88,7 +91,7 @@ export function setCachedSchema(config: ConnectionConfig, cacheEntry: CachedSche
  */
 export function invalidateSchemaCache(config: ConnectionConfig): void {
   if (!schemaCacheStore) {
-    console.warn('[schema-cache] Cache store not initialized')
+    log.warn('Cache store not initialized')
     return
   }
 
@@ -102,5 +105,5 @@ export function invalidateSchemaCache(config: ConnectionConfig): void {
   delete allCache[cacheKey]
   schemaCacheStore.set('cache', allCache)
 
-  console.log(`[schema-cache] Invalidated cache for ${cacheKey}`)
+  log.debug(`Invalidated cache for ${cacheKey}`)
 }

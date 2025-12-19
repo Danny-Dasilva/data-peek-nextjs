@@ -207,13 +207,16 @@ export class PostgresAdapter implements DatabaseAdapter {
 
     try {
       // Query 1: Get all schemas (excluding system schemas)
+      // Use pg_catalog.pg_namespace instead of information_schema.schemata because
+      // information_schema only shows schemas where the user has privileges,
+      // which breaks read-only users who can SELECT but aren't shown schemas
       const schemasResult = await client.query(`
-        SELECT schema_name
-        FROM information_schema.schemata
-        WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
-          AND schema_name NOT LIKE 'pg_toast_temp_%'
-          AND schema_name NOT LIKE 'pg_temp_%'
-        ORDER BY schema_name
+        SELECT nspname as schema_name
+        FROM pg_catalog.pg_namespace
+        WHERE nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+          AND nspname NOT LIKE 'pg_toast_temp_%'
+          AND nspname NOT LIKE 'pg_temp_%'
+        ORDER BY nspname
       `)
 
       // Query 2: Get all tables and views

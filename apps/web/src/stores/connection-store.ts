@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import {
   ConnectionConfig,
   SchemaInfo,
@@ -93,7 +94,9 @@ const toConnectionWithStatus = (config: ConnectionConfig): ConnectionWithStatus 
   isConnecting: false
 })
 
-export const useConnectionStore = create<ConnectionState>((set, get) => ({
+export const useConnectionStore = create<ConnectionState>()(
+  persist(
+    (set, get) => ({
   // Initial state
   connections: [],
   activeConnectionId: null,
@@ -331,4 +334,37 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     )
     return enumType?.values
   }
-}))
+    }),
+    {
+      name: 'data-peek-active-connection',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        activeConnectionId: state.activeConnectionId
+      }),
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, validate the connection still exists and fetch schemas
+        if (state?.activeConnectionId) {
+          // Wait for connections to be initialized, then validate and connect
+          const checkAndConnect = () => {
+            const { connections, activeConnectionId, fetchSchemas, setActiveConnection } =
+              useConnectionStore.getState()
+
+            if (connections.length > 0 && activeConnectionId) {
+              const connectionExists = connections.some((c) => c.id === activeConnectionId)
+              if (connectionExists) {
+                // Connection exists, fetch schemas
+                fetchSchemas(activeConnectionId)
+              } else {
+                // Connection was deleted, clear the persisted ID
+                setActiveConnection(null)
+              }
+            }
+          }
+
+          // Small delay to ensure connections are loaded
+          setTimeout(checkAndConnect, 100)
+        }
+      }
+    }
+  )
+)

@@ -47,9 +47,11 @@ function SQLCollapsible({ sql }: { sql: string }) {
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation()
-    navigator.clipboard.writeText(ensureSemicolon(sql))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(ensureSemicolon(sql))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }
   }
 
   return (

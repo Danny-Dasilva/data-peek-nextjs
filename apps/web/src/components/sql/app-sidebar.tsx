@@ -7,6 +7,7 @@ import { QueryHistory } from '@/components/sql/query-history'
 import { SavedQueries } from '@/components/sql/saved-queries'
 import { SchemaExplorer } from '@/components/sql/schema-explorer'
 import { SidebarQuickQuery } from '@/components/sql/sidebar-quick-query'
+import { Dashboards } from '@/components/sql/dashboard'
 import {
   Sidebar,
   SidebarContent,
@@ -50,6 +51,11 @@ export function AppSidebar({ onOpenSettings, ...props }: AppSidebarProps) {
 
         {/* Saved Queries */}
         <SavedQueries />
+
+        <SidebarSeparator className="mx-3" />
+
+        {/* Dashboards */}
+        <Dashboards />
 
         {/* Secondary Navigation - Settings & Help */}
         <SidebarGroup className="mt-auto">

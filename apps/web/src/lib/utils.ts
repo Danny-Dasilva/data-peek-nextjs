@@ -6,34 +6,32 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
- * Platform detection for keyboard shortcuts
+ * Key symbols interface for platform-specific shortcuts
  */
-export const isMac =
-  typeof navigator !== 'undefined'
-    ? navigator.platform.toUpperCase().indexOf('MAC') >= 0
-    : false
+export interface KeySymbols {
+  mod: string
+  alt: string
+  shift: string
+  enter: string
+}
 
 /**
  * Platform-specific modifier key symbols
+ * Default to non-Mac values for SSR consistency - use useKeys() hook for client-side detection
  */
-export const keys = {
-  mod: isMac ? '⌘' : 'Ctrl',
-  alt: isMac ? '⌥' : 'Alt',
-  shift: isMac ? '⇧' : 'Shift',
-  enter: isMac ? '↵' : 'Enter'
-} as const
+export const keys: KeySymbols = {
+  mod: 'Ctrl',
+  alt: 'Alt',
+  shift: 'Shift',
+  enter: 'Enter'
+}
 
 /**
- * Format a keyboard shortcut for display
- * @example shortcut('mod', 'K') => '⌘K' on Mac, 'Ctrl+K' on Windows
+ * Mac-specific key symbols
  */
-export function shortcut(...parts: string[]): string {
-  const mapped = parts.map((p) => {
-    if (p === 'mod') return keys.mod
-    if (p === 'alt') return keys.alt
-    if (p === 'shift') return keys.shift
-    if (p === 'enter') return keys.enter
-    return p
-  })
-  return isMac ? mapped.join('') : mapped.join('+')
+export const macKeys: KeySymbols = {
+  mod: '⌘',
+  alt: '⌥',
+  shift: '⇧',
+  enter: '↵'
 }

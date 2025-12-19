@@ -161,9 +161,10 @@ export const AI_PROVIDERS: readonly ProviderInfo[] = [
         recommended: true,
         description: 'Most capable'
       },
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Balanced' },
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Faster' },
-      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Previous gen' }
+      { id: 'gemini-3-flash', name: 'Gemini 3 Flash', description: 'Fast & capable' },
+      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Previous gen' },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Previous gen' },
+      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Legacy' }
     ]
   },
   {
@@ -1161,4 +1162,248 @@ export interface SavedQuery {
   createdAt: number;
   /** When the query was last updated (Unix timestamp) */
   updatedAt: number;
+}
+
+// ============================================
+// Query Telemetry Types
+// ============================================
+
+/**
+ * Phase names for query telemetry
+ */
+export type TelemetryPhaseName =
+  | 'tcp_handshake'
+  | 'db_handshake'
+  | 'network_latency'
+  | 'planning'
+  | 'execution'
+  | 'download'
+  | 'parse'
+
+/**
+ * Single timing phase in query execution
+ */
+export interface TimingPhase {
+  /** Phase identifier */
+  name: TelemetryPhaseName
+  /** Duration in milliseconds */
+  durationMs: number
+  /** Start offset from query beginning in milliseconds */
+  startOffset: number
+}
+
+/**
+ * Complete telemetry data for a query execution
+ */
+export interface QueryTelemetry {
+  /** Timing phases */
+  phases: TimingPhase[]
+  /** Total query duration in milliseconds */
+  totalDurationMs: number
+  /** Number of rows returned */
+  rowCount?: number
+  /** Bytes received from server */
+  bytesReceived?: number
+  /** Whether connection was reused from pool */
+  connectionReused?: boolean
+}
+
+/**
+ * Statistical results from running a query multiple times
+ */
+export interface BenchmarkResult {
+  /** Number of benchmark runs */
+  runCount: number
+  /** Aggregate timing statistics */
+  stats: {
+    min: number
+    max: number
+    avg: number
+    p90: number
+    p95: number
+    p99: number
+    stdDev: number
+  }
+  /** Per-phase statistics */
+  phaseStats: Record<string, { avg: number; p90: number; p95: number; p99: number }>
+  /** Individual telemetry runs (limited to first 10 for memory) */
+  telemetryRuns: QueryTelemetry[]
+}
+
+// ============================================
+// Dashboard Types
+// ============================================
+
+/**
+ * Widget types supported in dashboards
+ */
+export type WidgetType = 'chart' | 'kpi' | 'table'
+
+/**
+ * Chart types for chart widgets
+ */
+export type DashboardChartType = 'bar' | 'line' | 'area' | 'pie'
+
+/**
+ * Alias for backwards compatibility
+ */
+export type ChartWidgetType = DashboardChartType
+
+/**
+ * KPI format types
+ */
+export type KPIFormat = 'number' | 'currency' | 'percentage' | 'duration'
+
+/**
+ * Widget grid layout position and size
+ */
+export interface WidgetLayout {
+  x: number
+  y: number
+  w: number
+  h: number
+  minW?: number
+  minH?: number
+}
+
+/**
+ * Configuration for chart widgets
+ */
+export interface ChartWidgetConfig {
+  widgetType: 'chart'
+  chartType: DashboardChartType
+  xKey: string
+  yKeys: string[]
+  colors?: string[]
+  showLegend?: boolean
+  showGrid?: boolean
+}
+
+/**
+ * Configuration for KPI widgets
+ */
+export interface KPIWidgetConfig {
+  widgetType: 'kpi'
+  valueKey: string
+  format?: KPIFormat
+  label?: string
+  prefix?: string
+  suffix?: string
+  trend?: {
+    direction: 'up' | 'down' | 'neutral'
+    previousValue?: number
+  }
+}
+
+/**
+ * Configuration for table widgets
+ */
+export interface TableWidgetConfig {
+  widgetType: 'table'
+  columns?: string[]
+  pageSize?: number
+}
+
+/**
+ * Union type for all widget configurations
+ */
+export type WidgetConfig = ChartWidgetConfig | KPIWidgetConfig | TableWidgetConfig
+
+/**
+ * Dashboard widget definition
+ */
+export interface Widget {
+  id: string
+  type: WidgetType
+  title: string
+  query: string
+  connectionId: string
+  layout: WidgetLayout
+  config: WidgetConfig
+  createdAt?: number
+  updatedAt?: number
+}
+
+/**
+ * Dashboard auto-refresh schedule
+ */
+export interface RefreshSchedule {
+  enabled: boolean
+  intervalMs: number
+}
+
+/**
+ * Dashboard definition
+ */
+export interface Dashboard {
+  id: string
+  name: string
+  description?: string
+  widgets: Widget[]
+  tags: string[]
+  layoutCols: number
+  refreshSchedule?: RefreshSchedule
+  createdAt: number
+  updatedAt: number
+  version?: number
+  syncId?: string
+}
+
+/**
+ * Input for creating a new dashboard
+ */
+export interface CreateDashboardInput {
+  name: string
+  description?: string
+  tags?: string[]
+  widgets?: Omit<Widget, 'id' | 'createdAt' | 'updatedAt'>[]
+  layoutCols?: number
+  refreshSchedule?: RefreshSchedule
+}
+
+/**
+ * Input for updating a dashboard
+ */
+export interface UpdateDashboardInput {
+  name?: string
+  description?: string
+  tags?: string[]
+  layoutCols?: number
+  refreshSchedule?: RefreshSchedule
+}
+
+/**
+ * Input for creating a widget
+ */
+export interface CreateWidgetInput {
+  type: WidgetType
+  title: string
+  query: string
+  connectionId: string
+  layout: WidgetLayout
+  config: WidgetConfig
+}
+
+/**
+ * Input for updating a widget
+ */
+export interface UpdateWidgetInput {
+  title?: string
+  query?: string
+  connectionId?: string
+  layout?: WidgetLayout
+  config?: WidgetConfig
+}
+
+/**
+ * Result of executing a widget query
+ */
+export interface WidgetRunResult {
+  widgetId: string
+  success: boolean
+  data?: Record<string, unknown>[]
+  error?: string
+  durationMs: number
+  rowCount: number
+  executedAt: number
 }

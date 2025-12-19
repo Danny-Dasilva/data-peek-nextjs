@@ -26,7 +26,8 @@ import { SettingsModal } from '@/components/sql/settings-modal'
 import { Notifications } from '@/components/sql/notifications'
 import { useAIStore } from '@/stores/ai-store'
 import { useConnectionStore, useSettingsStore, useTabStore } from '@/stores'
-import { cn, keys } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { useKeys } from '@/hooks/use-keys'
 import { Button } from '@/components/sql/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/sql/ui/tooltip'
 import { api } from '@/lib/api-client'
@@ -35,6 +36,7 @@ import { api } from '@/lib/api-client'
 function LayoutContent() {
   const { toggleSidebar } = useSidebar()
   const { setTheme } = useTheme()
+  const keys = useKeys()
 
   const activeConnection = useConnectionStore((s) => s.getActiveConnection())
   const connections = useConnectionStore((s) => s.connections)

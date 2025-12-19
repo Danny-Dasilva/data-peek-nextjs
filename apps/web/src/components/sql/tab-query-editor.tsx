@@ -44,7 +44,7 @@ import {
 import type { EditContext } from '@data-peek/shared'
 import { SQLEditor } from '@/components/sql/sql-editor'
 import { formatSQL } from '@/lib/sql-formatter'
-import { keys } from '@/lib/utils'
+import { useKeys } from '@/hooks/use-keys'
 import { downloadCSV, downloadJSON, generateExportFilename } from '@/lib/export'
 import { buildSelectQuery } from '@/lib/sql-helpers'
 import type { QueryResult as IpcQueryResult, ForeignKeyInfo, ColumnInfo } from '@data-peek/shared'
@@ -54,12 +54,16 @@ import { ERDVisualization } from '@/components/sql/erd-visualization'
 import { ExecutionPlanViewer } from '@/components/sql/execution-plan-viewer'
 import { TableDesigner } from '@/components/sql/table-designer'
 import { SaveQueryDialog } from '@/components/sql/save-query-dialog'
+import { BenchmarkButton } from '@/components/sql/benchmark-button'
+import { TelemetryPanel } from '@/components/sql/telemetry-panel'
+import { useTelemetryStore } from '@/stores/telemetry-store'
 
 interface TabQueryEditorProps {
   tabId: string
 }
 
 export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
+  const keys = useKeys()
   const tab = useTabStore((s) => s.getTab(tabId)) as Tab | undefined
   const updateTabQuery = useTabStore((s) => s.updateTabQuery)
   const updateTabResult = useTabStore((s) => s.updateTabResult)
@@ -115,6 +119,11 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
 
   // Save query dialog state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+
+  // Telemetry store - for benchmark and query timing
+  const showTelemetryPanel = useTelemetryStore((s) => s.showTelemetryPanel)
+  const tabTelemetry = useTelemetryStore((s) => s.tabTelemetry.get(tabId))
+  const tabBenchmark = useTelemetryStore((s) => s.tabBenchmark.get(tabId))
 
   // Get the createForeignKeyTab action
   const createForeignKeyTab = useTabStore((s) => s.createForeignKeyTab)
@@ -770,6 +779,12 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            <BenchmarkButton
+              tabId={tabId}
+              query={tab.query}
+              connection={tabConnection}
+              disabled={tab.isExecuting || !tab.query.trim()}
+            />
             {!isEditorCollapsed && (
               <>
                 <Button
@@ -1123,6 +1138,11 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
 
       {/* Save Query Dialog */}
       <SaveQueryDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen} query={tab.query} />
+
+      {/* Telemetry Panel */}
+      {showTelemetryPanel && (tabTelemetry || tabBenchmark) && (
+        <TelemetryPanel tabId={tabId} />
+      )}
     </div>
   )
 }

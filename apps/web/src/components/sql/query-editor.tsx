@@ -24,9 +24,10 @@ import { DataTable } from '@/components/sql/data-table'
 import { SQLEditor } from '@/components/sql/sql-editor'
 import { formatSQL } from '@/lib/sql-formatter'
 import { SaveQueryDialog } from '@/components/sql/save-query-dialog'
-import { keys } from '@/lib/utils'
+import { useKeys } from '@/hooks/use-keys'
 
 export function QueryEditor() {
+  const keys = useKeys()
   const activeConnection = useConnectionStore((s) => s.getActiveConnection())
   const schemas = useConnectionStore((s) => s.schemas)
   const { currentQuery, isExecuting, result, error } = useQueryStore()

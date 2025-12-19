@@ -28,9 +28,10 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/sql/ui/tooltip'
 import { useQueryStore, useConnectionStore } from '@/stores'
 import { formatSQL } from '@/lib/sql-formatter'
-import { keys } from '@/lib/utils'
+import { useKeys } from '@/hooks/use-keys'
 
 export function NavActions() {
+  const keys = useKeys()
   const [isOpen, setIsOpen] = React.useState(false)
   const [copied, setCopied] = React.useState(false)
 

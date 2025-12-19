@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { ForeignKeyInfo } from '@data-peek/shared'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/sql/ui/tooltip'
-import { keys } from '@/lib/utils'
+import { useKeys } from '@/hooks/use-keys'
 
 interface FKCellValueProps {
   value: unknown
@@ -19,6 +19,8 @@ export function FKCellValue({
   onForeignKeyClick,
   onForeignKeyOpenTab
 }: FKCellValueProps) {
+  const keys = useKeys()
+
   if (value === null || value === undefined) {
     return <span className="text-muted-foreground/50 italic">NULL</span>
   }

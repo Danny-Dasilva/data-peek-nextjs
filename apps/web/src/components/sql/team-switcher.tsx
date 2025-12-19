@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/sql/ui/dropdown-menu'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/sql/ui/sidebar'
-import { keys } from '@/lib/utils'
+import { useKeys } from '@/hooks/use-keys'
 
 export function TeamSwitcher({
   teams
@@ -24,6 +24,7 @@ export function TeamSwitcher({
     plan: string
   }[]
 }) {
+  const keys = useKeys()
   const [activeTeam, setActiveTeam] = React.useState(teams[0])
 
   if (!activeTeam) {

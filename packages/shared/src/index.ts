@@ -330,7 +330,7 @@ export type AIChatResponse = AIStructuredResponse;
 export interface StoredQueryData {
   type: 'query';
   sql: string;
-  explanation: string;
+  explanation?: string;
   warning?: string;
 }
 

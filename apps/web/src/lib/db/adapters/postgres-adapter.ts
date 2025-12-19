@@ -217,15 +217,21 @@ export class PostgresAdapter implements DatabaseAdapter {
       `)
 
       // Query 2: Get all tables and views
+      // Use pg_catalog views instead of information_schema.tables because
+      // information_schema only shows tables where the user has privileges,
+      // which breaks read-only users who can SELECT but aren't shown tables
       const tablesResult = await client.query(`
-        SELECT
-          table_schema,
-          table_name,
-          table_type
-        FROM information_schema.tables
-        WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
-          AND table_schema NOT LIKE 'pg_toast_temp_%'
-          AND table_schema NOT LIKE 'pg_temp_%'
+        SELECT schemaname as table_schema, tablename as table_name, 'BASE TABLE' as table_type
+        FROM pg_catalog.pg_tables
+        WHERE schemaname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+          AND schemaname NOT LIKE 'pg_toast_temp_%'
+          AND schemaname NOT LIKE 'pg_temp_%'
+        UNION ALL
+        SELECT schemaname as table_schema, viewname as table_name, 'VIEW' as table_type
+        FROM pg_catalog.pg_views
+        WHERE schemaname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+          AND schemaname NOT LIKE 'pg_toast_temp_%'
+          AND schemaname NOT LIKE 'pg_temp_%'
         ORDER BY table_schema, table_name
       `)
 

@@ -115,6 +115,7 @@ export function AIMessage({ message, onOpenInTab, connection, schemas = [] }: AI
   // Refs to prevent infinite fetch loops
   const chartFetchedRef = React.useRef(false)
   const metricFetchedRef = React.useRef(false)
+  const queryFetchedRef = React.useRef(false)
 
   const isUser = message.role === 'user'
 
@@ -229,6 +230,24 @@ export function AIMessage({ message, onOpenInTab, connection, schemas = [] }: AI
         }
       }
       fetchMetricData()
+    }
+  }, [message.responseData?.type, connection?.id])
+
+  // Auto-execute query when query response is received (if safe)
+  // Use ref to prevent infinite fetch loops - only fetch once per message
+  React.useEffect(() => {
+    const queryData = message.responseData?.type === 'query'
+      ? (message.responseData as AIQueryData)
+      : null
+
+    // Only auto-execute if:
+    // - Has SQL
+    // - Doesn't require confirmation (not a mutation like DELETE/UPDATE)
+    // - Connection available
+    // - Haven't already fetched
+    if (queryData?.sql && !queryData.requiresConfirmation && connection && !queryFetchedRef.current) {
+      queryFetchedRef.current = true
+      handleExecuteInline(queryData.sql)
     }
   }, [message.responseData?.type, connection?.id])
 

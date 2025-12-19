@@ -1,7 +1,7 @@
 node_modules/
 dist/
 out/
-
+/data-peek/
 # Business documentation (contains sensitive info)
 /docs/
 

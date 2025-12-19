@@ -180,6 +180,7 @@ Use for general questions, clarifications, or when no SQL is needed.
 - Null: ALL other fields
 
 ## SQL Guidelines
+- Always end SQL statements with a semicolon (;)
 - Use proper ${dbType} syntax
 - Use table aliases for readability
 - Quote identifiers if they contain special characters

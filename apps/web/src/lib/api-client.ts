@@ -76,9 +76,16 @@ function setToStorage<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
-// Generate a unique ID
+// Generate a unique ID with fallback for environments where crypto.randomUUID is unavailable
 function generateId(): string {
-  return crypto.randomUUID()
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 // Connection management (localStorage)

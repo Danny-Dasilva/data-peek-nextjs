@@ -1,6 +1,7 @@
 'use client'
 
 import { api } from '@/lib/api-client'
+import { generateId } from '@/lib/utils'
 import * as React from 'react'
 import {
   X,
@@ -241,7 +242,7 @@ export function AIChatPanel({
     if (!input.trim() || isLoading || !isConfigured || !connection) return
 
     const userMessage: AIChatMessage = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       role: 'user',
       content: input.trim(),
       createdAt: new Date()
@@ -263,6 +264,7 @@ export function AIChatPanel({
 
       // Call actual AI service via IPC
       const response = await api.ai.chat(aiMessages, schemas, dbType)
+      console.log('[AI API Response]', response)
 
       if (response.success && response.data) {
         const data = response.data
@@ -278,29 +280,22 @@ export function AIChatPanel({
             warning: data.warning ?? undefined,
             requiresConfirmation: data.requiresConfirmation ?? undefined
           }
-        } else if (
-          data.type === 'chart' &&
-          data.title &&
-          data.chartType &&
-          data.sql &&
-          data.xKey &&
-          data.yKeys
-        ) {
+        } else if (data.type === 'chart' && data.sql && data.xKey && data.yKeys) {
           responseData = {
             type: 'chart',
-            title: data.title,
+            title: data.title ?? data.message ?? 'Chart',
             description: data.description ?? undefined,
-            chartType: data.chartType,
+            chartType: data.chartType ?? 'bar',
             sql: data.sql,
             xKey: data.xKey,
             yKeys: data.yKeys
           }
-        } else if (data.type === 'metric' && data.label && data.sql && data.format) {
+        } else if (data.type === 'metric' && data.sql) {
           responseData = {
             type: 'metric',
-            label: data.label,
+            label: data.label ?? data.message ?? 'Value',
             sql: data.sql,
-            format: data.format
+            format: data.format ?? 'number'
           }
         } else if (data.type === 'schema' && data.tables) {
           responseData = {
@@ -310,7 +305,7 @@ export function AIChatPanel({
         }
 
         const assistantMessage: AIChatMessage = {
-          id: crypto.randomUUID(),
+          id: generateId(),
           role: 'assistant',
           content: data.message,
           responseData,
@@ -321,7 +316,7 @@ export function AIChatPanel({
       } else {
         // Show error message
         const errorMessage: AIChatMessage = {
-          id: crypto.randomUUID(),
+          id: generateId(),
           role: 'assistant',
           content: `Sorry, I encountered an error: ${response.error || 'Unknown error'}`,
           createdAt: new Date()
@@ -331,7 +326,7 @@ export function AIChatPanel({
     } catch (error) {
       console.error('AI chat error:', error)
       const errorMessage: AIChatMessage = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         role: 'assistant',
         content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         createdAt: new Date()

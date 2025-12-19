@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import type { QueryResult } from './query-store'
 import type { StatementResult } from '@data-peek/shared'
 import { buildSelectQuery } from '@/lib/sql-helpers'
+import { generateId } from '@/lib/utils'
 import { useConnectionStore } from './connection-store'
 
 /**
@@ -176,7 +177,7 @@ export const useTabStore = create<TabState>()(
       activeTabId: null,
 
       createQueryTab: (connectionId, initialQuery = '') => {
-        const id = crypto.randomUUID()
+        const id = generateId()
         const tabs = get().tabs
         const maxOrder = tabs.length > 0 ? Math.max(...tabs.map((t) => t.order)) : -1
 
@@ -210,7 +211,7 @@ export const useTabStore = create<TabState>()(
 
       createTablePreviewTab: (connectionId, schemaName, tableName) => {
         // Always create a new tab (no deduplication per user preference)
-        const id = crypto.randomUUID()
+        const id = generateId()
         const tabs = get().tabs
         const maxOrder = tabs.length > 0 ? Math.max(...tabs.map((t) => t.order)) : -1
 
@@ -256,7 +257,7 @@ export const useTabStore = create<TabState>()(
       },
 
       createForeignKeyTab: (connectionId, schema, table, column, value) => {
-        const id = crypto.randomUUID()
+        const id = generateId()
         const tabs = get().tabs
         const maxOrder = tabs.length > 0 ? Math.max(...tabs.map((t) => t.order)) : -1
 
@@ -324,7 +325,7 @@ export const useTabStore = create<TabState>()(
           return existingTab.id
         }
 
-        const id = crypto.randomUUID()
+        const id = generateId()
         const tabs = get().tabs
         const maxOrder = tabs.length > 0 ? Math.max(...tabs.map((t) => t.order)) : -1
 
@@ -362,7 +363,7 @@ export const useTabStore = create<TabState>()(
           }
         }
 
-        const id = crypto.randomUUID()
+        const id = generateId()
         const tabs = get().tabs
         const maxOrder = tabs.length > 0 ? Math.max(...tabs.map((t) => t.order)) : -1
         const mode = tableName ? 'edit' : 'create'

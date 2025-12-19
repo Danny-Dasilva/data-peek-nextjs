@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { generateId } from '@/lib/utils'
 import {
   Sheet,
   SheetContent,
@@ -153,7 +154,7 @@ function SmartField({
 
   // Generate UUID - memoized to prevent recreation on every render
   const generateUUID = React.useCallback(() => {
-    onChange(crypto.randomUUID())
+    onChange(generateId())
   }, [onChange])
 
   // Set current timestamp - memoized

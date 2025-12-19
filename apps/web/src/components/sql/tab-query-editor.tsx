@@ -1,6 +1,7 @@
 'use client'
 
 import { api } from '@/lib/api-client'
+import { generateId } from '@/lib/utils'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Play,
@@ -165,7 +166,7 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
     }
 
     // Generate unique execution ID for cancellation support
-    const executionId = crypto.randomUUID()
+    const executionId = generateId()
     updateTabExecuting(tabId, true, executionId)
 
     try {
@@ -456,7 +457,7 @@ export function TabQueryEditor({ tabId }: TabQueryEditorProps) {
   // FK Panel: Handle click to open panel
   const handleFKClick = useCallback(
     async (fk: ForeignKeyInfo, value: unknown) => {
-      const panelId = crypto.randomUUID()
+      const panelId = generateId()
 
       // Add loading panel
       setFkPanels((prev) => [

@@ -10,6 +10,7 @@ import type {
   PrimaryKeyValue,
   ColumnInfo
 } from '@data-peek/shared'
+import { generateId } from '@/lib/utils'
 
 /**
  * Edit mode state per tab
@@ -257,7 +258,7 @@ export const useEditStore = create<EditStoreState>()((set, get) => ({
   },
 
   addNewRow: (tabId, defaultValues) => {
-    const id = crypto.randomUUID()
+    const id = generateId()
     set((state) => {
       const newTabEdits = new Map(state.tabEdits)
       const existing = newTabEdits.get(tabId) ?? getInitialTabEditState()
@@ -428,7 +429,7 @@ export const useEditStore = create<EditStoreState>()((set, get) => ({
 
         const update: RowUpdate = {
           type: 'update',
-          id: crypto.randomUUID(),
+          id: generateId(),
           primaryKeys,
           changes,
           originalRow
@@ -453,7 +454,7 @@ export const useEditStore = create<EditStoreState>()((set, get) => ({
 
       const deleteOp: RowDelete = {
         type: 'delete',
-        id: crypto.randomUUID(),
+        id: generateId(),
         primaryKeys,
         originalRow
       }

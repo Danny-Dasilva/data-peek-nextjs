@@ -6,6 +6,7 @@ import type {
   IndexDefinition,
   PostgresDataType
 } from '@data-peek/shared'
+import { generateId } from '@/lib/utils'
 
 /**
  * Validation error for table designer
@@ -110,7 +111,7 @@ function createEmptyTableDefinition(schema: string, name: string = ''): TableDef
 
 function createDefaultColumn(): ColumnDefinition {
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     name: '',
     dataType: 'text' as PostgresDataType,
     isNullable: true,
@@ -467,7 +468,7 @@ export const useDDLStore = create<DDLStoreState>()((set, get) => ({
   },
 
   duplicateColumn: (tabId, columnId) => {
-    const newId = crypto.randomUUID()
+    const newId = generateId()
     set((state) => {
       const newStates = new Map(state.tabStates)
       const existing = newStates.get(tabId)
@@ -514,7 +515,7 @@ export const useDDLStore = create<DDLStoreState>()((set, get) => ({
 
   addConstraint: (tabId, type) => {
     const newConstraint: ConstraintDefinition = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       type,
       columns: []
     }
@@ -591,7 +592,7 @@ export const useDDLStore = create<DDLStoreState>()((set, get) => ({
 
   addIndex: (tabId) => {
     const newIndex: IndexDefinition = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       columns: [],
       isUnique: false
     }

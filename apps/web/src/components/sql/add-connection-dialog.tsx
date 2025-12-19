@@ -1,6 +1,7 @@
 'use client'
 
 import { api } from '@/lib/api-client'
+import { generateId } from '@/lib/utils'
 import { useState, useEffect } from 'react'
 import { Loader2, Database, CheckCircle2, XCircle, Link, Settings2 } from 'lucide-react'
 import { Button } from '@/components/sql/ui/button'
@@ -387,7 +388,7 @@ export function AddConnectionDialog({
       dbType === 'mssql' && mssqlOptions?.authentication === 'ActiveDirectoryIntegrated'
 
     return {
-      id: editConnection?.id || crypto.randomUUID(),
+      id: editConnection?.id || generateId(),
       name: name || `${host}/${database}`,
       host,
       port: parseInt(port, 10),

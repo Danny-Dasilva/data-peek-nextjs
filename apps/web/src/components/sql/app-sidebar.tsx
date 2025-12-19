@@ -8,6 +8,7 @@ import { SavedQueries } from '@/components/sql/saved-queries'
 import { SchemaExplorer } from '@/components/sql/schema-explorer'
 import { SidebarQuickQuery } from '@/components/sql/sidebar-quick-query'
 import { Dashboards } from '@/components/sql/dashboard'
+import type { Dashboard } from '@data-peek/shared'
 import {
   Sidebar,
   SidebarContent,
@@ -23,9 +24,10 @@ import {
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onOpenSettings?: () => void
+  onSelectDashboard?: (dashboard: Dashboard) => void
 }
 
-export function AppSidebar({ onOpenSettings, ...props }: AppSidebarProps) {
+export function AppSidebar({ onOpenSettings, onSelectDashboard, ...props }: AppSidebarProps) {
   return (
     <Sidebar className="border-r-0 bg-sidebar/80 backdrop-blur-xl" {...props}>
       {/* Header - Connection Switcher */}
@@ -55,7 +57,7 @@ export function AppSidebar({ onOpenSettings, ...props }: AppSidebarProps) {
         <SidebarSeparator className="mx-3" />
 
         {/* Dashboards */}
-        <Dashboards />
+        <Dashboards onSelectDashboard={onSelectDashboard} />
 
         {/* Secondary Navigation - Settings & Help */}
         <SidebarGroup className="mt-auto">

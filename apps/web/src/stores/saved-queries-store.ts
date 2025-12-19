@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { SavedQuery } from '@data-peek/shared'
 import { api } from '@/lib/api-client'
+import { generateId } from '@/lib/utils'
 
 interface SavedQueryState {
   savedQueries: SavedQuery[]
@@ -64,7 +65,7 @@ export const useSavedQueryStore = create<SavedQueryState>((set, get) => ({
     const now = Date.now()
     const newQuery: SavedQuery = {
       ...queryData,
-      id: crypto.randomUUID(),
+      id: generateId(),
       usageCount: 0,
       createdAt: now,
       updatedAt: now

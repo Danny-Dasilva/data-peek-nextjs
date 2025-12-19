@@ -34,6 +34,12 @@ interface QueryResultState {
   duration: number
 }
 
+// Ensure SQL ends with semicolon for proper display
+const ensureSemicolon = (sql: string) => {
+  const trimmed = sql.trim()
+  return trimmed.endsWith(';') ? trimmed : `${trimmed};`
+}
+
 // Collapsible SQL display component for charts and metrics
 function SQLCollapsible({ sql }: { sql: string }) {
   const [isExpanded, setIsExpanded] = React.useState(false)
@@ -41,49 +47,47 @@ function SQLCollapsible({ sql }: { sql: string }) {
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation()
-    navigator.clipboard.writeText(sql)
+    navigator.clipboard.writeText(ensureSemicolon(sql))
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
 
   return (
     <div className="rounded-lg border border-border/40 bg-muted/10 overflow-hidden">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors"
-      >
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+        >
           <Code className="size-3" />
           <span>SQL Query</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-muted/50 transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check className="size-3 text-green-500" />
-                <span className="text-green-500">Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="size-3" />
-                <span>Copy</span>
-              </>
-            )}
-          </button>
           {isExpanded ? (
-            <ChevronUp className="size-3.5" />
+            <ChevronUp className="size-3.5 ml-1" />
           ) : (
-            <ChevronDown className="size-3.5" />
+            <ChevronDown className="size-3.5 ml-1" />
           )}
-        </div>
-      </button>
+        </button>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-muted/50 hover:text-foreground transition-colors"
+        >
+          {copied ? (
+            <>
+              <Check className="size-3 text-green-500" />
+              <span className="text-green-500">Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy className="size-3" />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
       {isExpanded && (
         <div className="border-t border-border/30 bg-muted/20">
           <pre className="p-3 text-xs font-mono leading-relaxed text-foreground/80 whitespace-pre-wrap break-words overflow-x-auto">
-            {sql}
+            {ensureSemicolon(sql)}
           </pre>
         </div>
       )}
@@ -92,6 +96,9 @@ function SQLCollapsible({ sql }: { sql: string }) {
 }
 
 export function AIMessage({ message, onOpenInTab, connection, schemas = [] }: AIMessageProps) {
+  // Debug logging
+  console.log('[AIMessage] Rendering message:', message.id, 'responseData:', message.responseData)
+
   const [copiedContent, setCopiedContent] = React.useState(false)
   const [chartData, setChartData] = React.useState<Record<string, unknown>[] | null>(null)
   const [chartLoading, setChartLoading] = React.useState(false)
@@ -242,7 +249,7 @@ export function AIMessage({ message, onOpenInTab, connection, schemas = [] }: AI
               sql={queryData.sql}
               explanation={queryData.explanation}
               onExecute={() => handleExecuteInline(queryData.sql)}
-              onOpenInTab={() => onOpenInTab(queryData.sql)}
+              onOpenInTab={() => onOpenInTab(ensureSemicolon(queryData.sql))}
               isExecuting={queryExecuting}
               requiresConfirmation={queryData.requiresConfirmation}
             />
@@ -267,7 +274,7 @@ export function AIMessage({ message, onOpenInTab, connection, schemas = [] }: AI
                 rows={queryResult.rows}
                 totalRows={queryResult.totalRows}
                 duration={queryResult.duration}
-                onOpenInTab={() => onOpenInTab(queryData.sql)}
+                onOpenInTab={() => onOpenInTab(ensureSemicolon(queryData.sql))}
               />
             )}
           </div>

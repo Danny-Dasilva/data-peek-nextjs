@@ -2,6 +2,7 @@ import { resolvePostgresType, type QueryResult as IpcQueryResult } from '@data-p
 import { create } from 'zustand'
 import { api } from '@/lib/api-client'
 import { buildSelectQuery } from '@/lib/sql-helpers'
+import { generateId } from '@/lib/utils'
 import type { Connection, Table } from './connection-store'
 
 export interface QueryHistoryItem {
@@ -259,7 +260,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
         // Add to history
         const history = get().history
         const newHistoryItem: QueryHistoryItem = {
-          id: crypto.randomUUID(),
+          id: generateId(),
           query,
           timestamp: new Date(),
           durationMs: data.durationMs,
@@ -282,7 +283,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
         // Add to history as error
         const history = get().history
         const newHistoryItem: QueryHistoryItem = {
-          id: crypto.randomUUID(),
+          id: generateId(),
           query,
           timestamp: new Date(),
           durationMs: 0,
@@ -316,7 +317,7 @@ export const useQueryStore = create<QueryState>((set, get) => ({
       history: [
         {
           ...item,
-          id: crypto.randomUUID(),
+          id: generateId(),
           timestamp: new Date()
         },
         ...state.history

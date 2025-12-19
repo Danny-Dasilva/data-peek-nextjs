@@ -16,6 +16,8 @@ import {
 import { SavedQueriesDialog } from '@/components/sql/saved-queries-dialog'
 import { DatabaseIcon } from '@/components/sql/database-icons'
 import { AppSidebar } from '@/components/sql/app-sidebar'
+import { DashboardView } from '@/components/sql/dashboard'
+import type { Dashboard } from '@data-peek/shared'
 import { NavActions } from '@/components/sql/nav-actions'
 import { Separator } from '@/components/sql/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/sql/ui/sidebar'
@@ -53,6 +55,9 @@ function LayoutContent() {
 
   // Settings modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  // Dashboard view state
+  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null)
 
   // AI states from store
   const isAIPanelOpen = useAIStore((s) => s.isPanelOpen)
@@ -298,7 +303,10 @@ function LayoutContent() {
 
   return (
     <>
-      <AppSidebar onOpenSettings={() => setIsSettingsOpen(true)} />
+      <AppSidebar
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onSelectDashboard={setSelectedDashboard}
+      />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/40 bg-background/80 backdrop-blur-xl">
           <div className="flex flex-1 items-center gap-2 px-3">
@@ -358,7 +366,16 @@ function LayoutContent() {
           </div>
         </header>
 
-        <TabContainer />
+        {selectedDashboard ? (
+          <DashboardView
+            dashboardId={selectedDashboard.id}
+            connectionConfig={activeConnection || undefined}
+            connections={connections}
+            onBack={() => setSelectedDashboard(null)}
+          />
+        ) : (
+          <TabContainer />
+        )}
       </SidebarInset>
 
       {/* Command Palette */}

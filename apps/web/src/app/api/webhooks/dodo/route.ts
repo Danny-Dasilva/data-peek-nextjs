@@ -5,11 +5,16 @@ import { calculateUpdatesUntil, generateLicenseKey } from "@/lib/license";
 import { Resend } from "resend";
 import DodoPayments from "dodopayments";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "re_123");
-const dodo = new DodoPayments({
-  bearerToken: process.env.DODO_API_KEY,
-  webhookKey: process.env.DODO_WEBHOOK_SECRET,
-});
+function getResendClient() {
+  return new Resend(process.env.RESEND_API_KEY ?? "re_123");
+}
+
+function getDodoClient() {
+  return new DodoPayments({
+    bearerToken: process.env.DODO_API_KEY,
+    webhookKey: process.env.DODO_WEBHOOK_SECRET,
+  });
+}
 
 // DodoPayments webhook event types
 type DodoEventType =
@@ -66,6 +71,7 @@ async function sendWelcomeEmail(
   console.log(`RESEND_API_KEY is configured (length: ${process.env.RESEND_API_KEY.length})`);
 
   try {
+    const resend = getResendClient();
     const result = await resend.emails.send({
       from: "data-peek <hello@send.datapeek.dev>",
       to: email,
@@ -125,6 +131,7 @@ export async function POST(request: NextRequest) {
     let event: DodoWebhookPayload;
 
     // Verify signature using Dodo Payments SDK (follows Standard Webhooks spec)
+    const dodo = getDodoClient();
     try {
       // unwrap() verifies the signature and returns the parsed payload
       const unwrapped = dodo.webhooks.unwrap(payload, { headers: webhookHeaders });

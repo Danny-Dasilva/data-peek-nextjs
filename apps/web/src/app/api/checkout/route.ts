@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import DodoPayments from 'dodopayments'
 
-const client = new DodoPayments({
-  bearerToken: process.env.DODO_API_KEY,
-  environment: process.env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
-})
+function getClient() {
+  return new DodoPayments({
+    bearerToken: process.env.DODO_API_KEY,
+    environment: process.env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
+  })
+}
 
 // Product ID for data-peek Pro license
 const PRO_LICENSE_PRODUCT_ID = process.env.DODO_PRO_PRODUCT_ID || 'prd_xxx'
 
 export async function POST(request: NextRequest) {
   try {
+    const client = getClient()
     const body = await request.json().catch(() => ({}))
     const { email, name } = body as { email?: string; name?: string }
 

@@ -3,10 +3,13 @@ import DodoPayments from "dodopayments";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-const dodo = new DodoPayments({ bearerToken: process.env.DODO_API_KEY });
+function getDodoClient() {
+  return new DodoPayments({ bearerToken: process.env.DODO_API_KEY });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const dodo = getDodoClient();
     const body = await request.json();
     const { license_key: rawLicenseKey } = body as { license_key: string };
 

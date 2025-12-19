@@ -21,7 +21,6 @@
     "@ai-sdk/openai": "^2.0.24",
     "@ai-sdk/openai-compatible": "^0.2.14",
     "@ai-sdk/react": "^2.0.12",
-    "@clerk/nextjs": "^6.35.5",
     "@data-peek/shared": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",

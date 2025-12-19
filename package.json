@@ -6,23 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "turbo run dev --filter=@data-peek/web",
-    "dev:desktop": "turbo run dev --filter=@data-peek/desktop",
-    "dev:docs": "turbo run dev --filter=docs",
     "build": "turbo run build",
-    "build:desktop": "turbo run build --filter=@data-peek/desktop",
     "build:web": "turbo run build --filter=@data-peek/web",
-    "build:docs": "turbo run build --filter=docs",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck types:check",
-    "postinstall": "pnpm --filter @data-peek/desktop exec electron-builder install-app-deps || true",
-    "setup": "pnpm install && pnpm setup:electron",
-    "setup:electron": "pnpm --filter @data-peek/desktop exec electron-builder install-app-deps",
-    "rebuild": "pnpm rebuild better-sqlite3 && pnpm setup:electron",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules pnpm-lock.yaml .turbo",
     "clean:install": "pnpm clean && pnpm install",
-    "build:win": "turbo run build:win --filter=@data-peek/desktop",
-    "build:mac": "turbo run build:mac --filter=@data-peek/desktop",
-    "build:linux": "turbo run build:linux --filter=@data-peek/desktop",
     "release": "bumpp package.json apps/*/package.json packages/*/package.json"
   },
   "devDependencies": {
